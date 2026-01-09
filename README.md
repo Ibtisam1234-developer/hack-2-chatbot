@@ -6,10 +6,14 @@ A full-stack todo application with JWT authentication, built with Next.js 16, Fa
 
 - ✅ **JWT Authentication** - Secure token-based auth with Better Auth
 - ✅ **User Isolation** - Each user can only access their own todos
-- ✅ **Full CRUD Operations** - Create, read, update, delete todos
-- ✅ **Completion Tracking** - Mark todos as complete/incomplete
-- ✅ **Responsive UI** - Mobile-first design with Tailwind CSS
-- ✅ **Optimistic Updates** - Instant UI feedback
+- ✅ **Full CRUD Operations** - Create, read, update, delete todos with edit modal
+- ✅ **Category Filtering** - Organize todos by Work, Personal, Health, Finance, or Other
+- ✅ **Due Date & Time** - Set precise deadlines with datetime picker
+- ✅ **Completion Tracking** - Mark todos as complete/incomplete with optimistic updates
+- ✅ **Beautiful UI** - Modern landing page with gradient effects and smooth animations
+- ✅ **Delete Confirmation** - Custom modal instead of browser alerts
+- ✅ **Responsive Design** - Mobile-first design with Tailwind CSS
+- ✅ **Optimistic Updates** - Instant UI feedback for better UX
 - ✅ **Type Safety** - Full TypeScript coverage
 - ✅ **Serverless Database** - Neon PostgreSQL with connection pooling
 
