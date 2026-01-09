@@ -1,0 +1,474 @@
+"""
+Database Layer for Interactive Todo Application
+
+Owner: Database Agent
+Purpose: Neon PostgreSQL connection management and CRUD operations
+
+Constitutional Constraints:
+- ALLOWED: Database connections, SQL queries, schema initialization, error handling
+- FORBIDDEN: User input (input()), User output (print() for menus), Business logic, Service layer calls
+
+All functions use parameterized queries to prevent SQL injection.
+All write operations include proper transaction management (commit/rollback).
+"""
+
+import os
+from typing import Optional
+import psycopg2
+import psycopg2.extensions
+import psycopg2.extras
+from dotenv import load_dotenv
+
+
+# Load environment variables from .env file
+load_dotenv()
+
+
+def get_connection() -> psycopg2.extensions.connection:
+    """
+    Establish connection to Neon PostgreSQL using DATABASE_URL from environment.
+
+    Returns:
+        Active database connection with autocommit disabled for transaction control
+
+    Raises:
+        ConnectionError: If DATABASE_URL environment variable is missing
+        ConnectionError: If connection to database fails
+
+    Implementation Notes:
+        - Loads DATABASE_URL from environment using python-dotenv
+        - Uses psycopg2.connect() with connection string
+        - Sets autocommit=False for explicit transaction control
+        - Connection supports context manager usage (with statement)
+
+    Constitutional Compliance:
+        ✅ NO user interaction
+        ✅ NO business logic
+        ✅ Database-only concern
+    """
+    database_url = os.getenv("DATABASE_URL")
+
+    if not database_url:
+        raise ConnectionError(
+            "DATABASE_URL environment variable is not set. "
+            "Please create a .env file with DATABASE_URL=<your-neon-connection-string>"
+        )
+
+    try:
+        # Establish connection with autocommit disabled for transaction control
+        conn = psycopg2.connect(database_url)
+        conn.autocommit = False
+        return conn
+
+    except psycopg2.OperationalError as e:
+        raise ConnectionError(f"Failed to connect to database: {e}")
+
+    except Exception as e:
+        raise ConnectionError(f"Unexpected error during database connection: {e}")
+
+
+def initialize_schema(conn: psycopg2.extensions.connection) -> None:
+    """
+    Create tasks table if it doesn't exist.
+
+    Args:
+        conn: Active database connection
+
+    Raises:
+        psycopg2.DatabaseError: If schema creation fails
+
+    Implementation Notes:
+        - Executes CREATE TABLE IF NOT EXISTS (idempotent operation)
+        - Creates indexes for performance optimization
+        - Commits transaction on success
+        - Rolls back transaction on failure
+        - Table definition matches data-model.md specification
+
+    Schema:
+        - id: SERIAL PRIMARY KEY (auto-increment)
+        - title: VARCHAR(200) NOT NULL
+        - description: TEXT (nullable)
+        - is_completed: BOOLEAN NOT NULL DEFAULT FALSE
+        - created_at: TIMESTAMP NOT NULL DEFAULT NOW()
+        - updated_at: TIMESTAMP NOT NULL DEFAULT NOW()
+
+    Constitutional Compliance:
+        ✅ NO user interaction
+        ✅ NO business logic
+        ✅ Database-only concern
+    """
+    cursor = conn.cursor()
+
+    try:
+        # Create tasks table with all required fields
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS tasks (
+                id SERIAL PRIMARY KEY,
+                title VARCHAR(200) NOT NULL,
+                description TEXT,
+                is_completed BOOLEAN NOT NULL DEFAULT FALSE,
+                created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+            );
+        """)
+
+        # Create index on completion status for filtering (optional optimization)
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_tasks_completed
+            ON tasks(is_completed);
+        """)
+
+        # Create index on created_at for sorting (optional optimization)
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_tasks_created
+            ON tasks(created_at DESC);
+        """)
+
+        # ALWAYS renumber all tasks to start from 1 on app startup
+        # This ensures IDs are sequential without gaps regardless of deletions
+        cursor.execute("SELECT COUNT(*) FROM tasks;")
+        count = cursor.fetchone()[0]
+
+        if count > 0:
+            # Temporarily disable the primary key constraint to allow renumbering
+            # Create a temporary sequence for safe renumbering
+            cursor.execute("""
+                -- Create temporary column for new IDs
+                ALTER TABLE tasks ADD COLUMN IF NOT EXISTS temp_id INTEGER;
+
+                -- Assign new sequential IDs ordered by creation date
+                WITH numbered AS (
+                    SELECT id, ROW_NUMBER() OVER (ORDER BY created_at) as row_num
+                    FROM tasks
+                )
+                UPDATE tasks
+                SET temp_id = numbered.row_num
+                FROM numbered
+                WHERE tasks.id = numbered.id;
+
+                -- Update the actual IDs
+                UPDATE tasks SET id = temp_id;
+
+                -- Drop temporary column
+                ALTER TABLE tasks DROP COLUMN IF EXISTS temp_id;
+
+                -- Get max ID and reset sequence
+                SELECT setval('tasks_id_seq', (SELECT MAX(id) FROM tasks));
+            """)
+        else:
+            # Empty table - reset sequence to 1
+            cursor.execute("SELECT setval('tasks_id_seq', 1, false);")
+
+        conn.commit()
+
+    except psycopg2.DatabaseError as e:
+        conn.rollback()
+        raise psycopg2.DatabaseError(f"Failed to initialize schema: {e}")
+
+    finally:
+        cursor.close()
+
+
+def create_task_db(
+    conn: psycopg2.extensions.connection,
+    title: str,
+    description: Optional[str]
+) -> int:
+    """
+    Insert new task into database.
+
+    Args:
+        conn: Active database connection
+        title: Task title (assumed pre-validated by service layer)
+        description: Task description (optional, can be None)
+
+    Returns:
+        ID of newly created task (SERIAL auto-generated)
+
+    Raises:
+        psycopg2.DatabaseError: If insertion fails
+
+    Implementation Notes:
+        - Uses parameterized query with %s placeholders
+        - NO validation performed (service layer responsibility)
+        - is_completed defaults to FALSE (database default)
+        - created_at and updated_at default to NOW() (database default)
+        - Returns auto-generated task ID using RETURNING clause
+        - Commits transaction on success
+        - Rolls back transaction on failure
+
+    Constitutional Compliance:
+        ✅ NO validation (service layer responsibility)
+        ✅ NO user interaction
+        ✅ Parameterized queries (SQL injection prevention)
+    """
+    cursor = conn.cursor()
+
+    try:
+        # Parameterized INSERT query with RETURNING clause to get new ID
+        cursor.execute(
+            """
+            INSERT INTO tasks (title, description)
+            VALUES (%s, %s)
+            RETURNING id;
+            """,
+            (title, description)
+        )
+
+        # Fetch the auto-generated task ID
+        task_id = cursor.fetchone()[0]
+
+        conn.commit()
+        return task_id
+
+    except psycopg2.IntegrityError as e:
+        conn.rollback()
+        raise psycopg2.DatabaseError(f"Data integrity error during task creation: {e}")
+
+    except psycopg2.DatabaseError as e:
+        conn.rollback()
+        raise psycopg2.DatabaseError(f"Failed to create task: {e}")
+
+    finally:
+        cursor.close()
+
+
+def get_all_tasks_db(conn: psycopg2.extensions.connection) -> list[tuple]:
+    """
+    Retrieve all tasks from database ordered by creation date (newest first).
+
+    Args:
+        conn: Active database connection
+
+    Returns:
+        List of tuples, each tuple contains:
+        (id, title, description, is_completed, created_at, updated_at)
+
+        Returns empty list if no tasks exist
+
+    Raises:
+        psycopg2.DatabaseError: If query fails
+
+    Implementation Notes:
+        - Selects all 6 fields in consistent order
+        - Orders by created_at DESC (newest tasks first)
+        - Returns raw tuples (service layer converts to Task objects)
+        - No pagination (scope supports < 1000 tasks)
+        - Read-only operation (no commit needed)
+
+    Constitutional Compliance:
+        ✅ NO business logic (no filtering, no transformation)
+        ✅ Returns raw data for service layer processing
+    """
+    cursor = conn.cursor()
+
+    try:
+        # Select all tasks ordered by creation date (newest first)
+        cursor.execute("""
+            SELECT id, title, description, is_completed, created_at, updated_at
+            FROM tasks
+            ORDER BY created_at DESC;
+        """)
+
+        # Fetch all results as list of tuples
+        tasks = cursor.fetchall()
+        return tasks
+
+    except psycopg2.DatabaseError as e:
+        raise psycopg2.DatabaseError(f"Failed to retrieve tasks: {e}")
+
+    finally:
+        cursor.close()
+
+
+def update_task_db(
+    conn: psycopg2.extensions.connection,
+    task_id: int,
+    title: Optional[str],
+    description: Optional[str]
+) -> bool:
+    """
+    Update task title and/or description.
+
+    Args:
+        conn: Active database connection
+        task_id: ID of task to update
+        title: New title (None = no change)
+        description: New description (None = no change)
+
+    Returns:
+        True if task was updated (task existed)
+        False if task was not found
+
+    Raises:
+        psycopg2.DatabaseError: If update fails
+
+    Implementation Notes:
+        - Builds dynamic UPDATE query based on which fields are not None
+        - Always sets updated_at = NOW()
+        - Uses parameterized query for all values
+        - Checks cursor.rowcount to determine if task was found
+        - Commits transaction on success
+        - Rolls back transaction on failure
+
+    Constitutional Compliance:
+        ✅ NO validation (service layer validates before calling)
+        ✅ Parameterized queries
+        ✅ NO business logic (no field value processing)
+    """
+    cursor = conn.cursor()
+
+    try:
+        # Build dynamic UPDATE query based on provided fields
+        update_fields = []
+        params = []
+
+        # Build query safely without f-strings - construct from safe string operations
+        set_clause_parts = []
+
+        if title is not None:
+            set_clause_parts.append("title = %s")
+            params.append(title)
+
+        if description is not None:
+            set_clause_parts.append("description = %s")
+            params.append(description)
+
+        # Always update the updated_at timestamp
+        set_clause_parts.append("updated_at = NOW()")
+
+        # Add task_id as final parameter for WHERE clause
+        params.append(task_id)
+
+        # Construct query safely using string concatenation (no f-strings)
+        query = "UPDATE tasks SET " + ", ".join(set_clause_parts) + " WHERE id = %s;"
+
+        cursor.execute(query, params)
+
+        # Check if any rows were affected (task existed)
+        rows_affected = cursor.rowcount
+
+        conn.commit()
+        return rows_affected > 0
+
+    except psycopg2.DatabaseError as e:
+        conn.rollback()
+        raise psycopg2.DatabaseError(f"Failed to update task: {e}")
+
+    finally:
+        cursor.close()
+
+
+def toggle_task_status_db(
+    conn: psycopg2.extensions.connection,
+    task_id: int
+) -> bool:
+    """
+    Toggle task completion status (complete <-> incomplete).
+
+    Args:
+        conn: Active database connection
+        task_id: ID of task to toggle
+
+    Returns:
+        True if task was toggled (task existed)
+        False if task was not found
+
+    Raises:
+        psycopg2.DatabaseError: If toggle fails
+
+    Implementation Notes:
+        - Uses NOT operator to flip boolean value
+        - Updates updated_at timestamp automatically
+        - Uses parameterized query
+        - Checks cursor.rowcount to determine if task was found
+        - Commits transaction on success
+        - Rolls back transaction on failure
+
+    Constitutional Compliance:
+        ✅ Simple boolean toggle (no conditional logic)
+        ✅ Parameterized query
+        ✅ NO validation needed (toggle is idempotent)
+    """
+    cursor = conn.cursor()
+
+    try:
+        # Toggle is_completed and update timestamp
+        cursor.execute(
+            """
+            UPDATE tasks
+            SET is_completed = NOT is_completed, updated_at = NOW()
+            WHERE id = %s;
+            """,
+            (task_id,)
+        )
+
+        # Check if any rows were affected (task existed)
+        rows_affected = cursor.rowcount
+
+        conn.commit()
+        return rows_affected > 0
+
+    except psycopg2.DatabaseError as e:
+        conn.rollback()
+        raise psycopg2.DatabaseError(f"Failed to toggle task status: {e}")
+
+    finally:
+        cursor.close()
+
+
+def delete_task_db(
+    conn: psycopg2.extensions.connection,
+    task_id: int
+) -> bool:
+    """
+    Permanently delete task from database.
+
+    Args:
+        conn: Active database connection
+        task_id: ID of task to delete
+
+    Returns:
+        True if task was deleted (task existed)
+        False if task was not found
+
+    Raises:
+        psycopg2.DatabaseError: If deletion fails
+
+    Implementation Notes:
+        - Simple DELETE operation with WHERE clause
+        - Uses parameterized query
+        - Checks cursor.rowcount to determine if task was found
+        - Commits transaction on success
+        - Rolls back transaction on failure
+        - No CASCADE needed (no foreign keys in schema)
+
+    Constitutional Compliance:
+        ✅ Simple DELETE operation
+        ✅ NO validation (service layer confirms intent)
+        ✅ Parameterized query
+    """
+    cursor = conn.cursor()
+
+    try:
+        # Delete task by ID
+        cursor.execute(
+            """
+            DELETE FROM tasks
+            WHERE id = %s;
+            """,
+            (task_id,)
+        )
+
+        # Check if any rows were affected (task existed)
+        rows_affected = cursor.rowcount
+
+        conn.commit()
+        return rows_affected > 0
+
+    except psycopg2.DatabaseError as e:
+        conn.rollback()
+        raise psycopg2.DatabaseError(f"Failed to delete task: {e}")
+
+    finally:
+        cursor.close()
