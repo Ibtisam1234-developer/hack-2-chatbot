@@ -68,7 +68,7 @@ export default function SignupPage() {
           <h2 className="text-3xl font-bold text-gray-900 mb-2">
             Begin Your Journey
           </h2>
-          <p className="text-gray-600">
+          <p className="text-gray-700">
             Create your account and discover a calmer way to organize
           </p>
         </div>
@@ -140,7 +140,7 @@ export default function SignupPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={loading}
               />
-              <p className="mt-2 text-xs text-gray-500">
+              <p className="mt-2 text-xs text-gray-600">
                 Use at least 8 characters for a secure password
               </p>
             </div>
@@ -171,7 +171,7 @@ export default function SignupPage() {
                 <div className="w-full border-t border-purple-200"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Already have an account?</span>
+                <span className="px-2 bg-white text-gray-600">Already have an account?</span>
               </div>
             </div>
           </div>
@@ -188,7 +188,7 @@ export default function SignupPage() {
         </div>
 
         {/* Terms */}
-        <p className="mt-6 text-center text-xs text-gray-500">
+        <p className="mt-6 text-center text-xs text-gray-600">
           By creating an account, you agree to our Terms of Service and Privacy Policy
         </p>
       </div>

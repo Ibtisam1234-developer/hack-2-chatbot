@@ -1,0 +1,293 @@
+openapi: 3.1.0
+info:
+  title: AI Chatbot API
+  description: Chat endpoint for AI-powered task management
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8000
+    description: Development server
+
+paths:
+  /api/{user_id}/chat:
+    post:
+      summary: Send a chat message to the AI assistant
+      description: |
+        Processes a user message through the AI agent, which may invoke MCP tools
+        to manage tasks. Returns the AI response along with any tool calls made.
+      operationId: chat
+      tags:
+        - Chat
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: The authenticated user's ID (must match JWT sub claim)
+          schema:
+            type: string
+            example: "user_abc123"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+            examples:
+              newConversation:
+                summary: Start new conversation
+                value:
+                  message: "Add a task to buy groceries"
+              continueConversation:
+                summary: Continue existing conversation
+                value:
+                  message: "Mark it as done"
+                  conversation_id: 42
+      responses:
+        '200':
+          description: Successful response from AI
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+              examples:
+                taskCreated:
+                  summary: Task created successfully
+                  value:
+                    conversation_id: 42
+                    response: "I've added 'Buy groceries' to your task list."
+                    tool_calls:
+                      - name: add_task
+                        arguments:
+                          user_id: "user_abc123"
+                          title: "Buy groceries"
+                        result: "Task 'Buy groceries' added with ID 15."
+        '400':
+          description: Invalid request (empty message, invalid conversation_id)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required or token invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: User ID mismatch with JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Conversation not found or unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/{user_id}/conversations:
+    get:
+      summary: List user's conversations
+      description: Returns all conversations for the authenticated user, sorted by most recent first.
+      operationId: listConversations
+      tags:
+        - Conversations
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of conversations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Conversation'
+
+  /api/{user_id}/conversations/{conversation_id}:
+    get:
+      summary: Get conversation with messages
+      description: Returns a conversation and its full message history.
+      operationId: getConversation
+      tags:
+        - Conversations
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: conversation_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Conversation with messages
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationWithMessages'
+        '404':
+          description: Conversation not found or unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token from Better Auth
+
+  schemas:
+    ChatRequest:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          minLength: 1
+          maxLength: 4000
+          description: The user's message to the AI assistant
+          example: "Add a task to buy groceries"
+        conversation_id:
+          type: integer
+          nullable: true
+          description: Optional conversation ID to continue. If omitted, creates new conversation.
+          example: 42
+
+    ChatResponse:
+      type: object
+      required:
+        - conversation_id
+        - response
+        - tool_calls
+      properties:
+        conversation_id:
+          type: integer
+          description: The conversation ID (new or existing)
+          example: 42
+        response:
+          type: string
+          description: The AI assistant's response text
+          example: "I've added 'Buy groceries' to your task list."
+        tool_calls:
+          type: array
+          description: List of tool calls made by the AI
+          items:
+            $ref: '#/components/schemas/ToolCall'
+
+    ToolCall:
+      type: object
+      required:
+        - name
+        - arguments
+        - result
+      properties:
+        name:
+          type: string
+          description: Name of the MCP tool called
+          enum: [add_task, list_tasks, complete_task]
+          example: "add_task"
+        arguments:
+          type: object
+          description: Arguments passed to the tool
+          additionalProperties: true
+          example:
+            user_id: "user_abc123"
+            title: "Buy groceries"
+        result:
+          type: string
+          description: Result returned by the tool
+          example: "Task 'Buy groceries' added with ID 15."
+
+    Conversation:
+      type: object
+      required:
+        - id
+        - title
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: integer
+          example: 42
+        title:
+          type: string
+          maxLength: 100
+          example: "Add a task to buy groceries"
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-01-11T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2026-01-11T10:35:00Z"
+
+    ConversationWithMessages:
+      allOf:
+        - $ref: '#/components/schemas/Conversation'
+        - type: object
+          required:
+            - messages
+          properties:
+            messages:
+              type: array
+              items:
+                $ref: '#/components/schemas/Message'
+
+    Message:
+      type: object
+      required:
+        - id
+        - role
+        - content
+        - created_at
+      properties:
+        id:
+          type: integer
+          example: 123
+        role:
+          type: string
+          enum: [user, assistant]
+          example: "user"
+        content:
+          type: string
+          example: "Add a task to buy groceries"
+        tool_calls:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/ToolCall'
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-01-11T10:30:00Z"
+
+    Error:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          type: string
+          description: Error message
+          example: "Conversation not found"

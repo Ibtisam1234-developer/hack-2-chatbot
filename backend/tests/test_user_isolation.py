@@ -42,7 +42,7 @@ class TestUserIsolation:
     @pytest.mark.asyncio
     async def test_user_cannot_list_other_user_todos(self):
         """Test that User A cannot see User B's todos in list endpoint"""
-        async with AsyncClient(base_url=BASE_URL) as client:
+        async with AsyncClient(base_url=BASE_URL, timeout=30.0) as client:
             # User A creates a todo
             user_a_token = create_test_token("user_a")
             response_a = await client.post(
@@ -67,7 +67,7 @@ class TestUserIsolation:
     @pytest.mark.asyncio
     async def test_user_cannot_get_other_user_todo_by_id(self):
         """Test that User A cannot access User B's todo by ID"""
-        async with AsyncClient(base_url=BASE_URL) as client:
+        async with AsyncClient(base_url=BASE_URL, timeout=30.0) as client:
             # User A creates a todo
             user_a_token = create_test_token("user_a")
             response_a = await client.post(
@@ -92,7 +92,7 @@ class TestUserIsolation:
     @pytest.mark.asyncio
     async def test_user_cannot_update_other_user_todo(self):
         """Test that User A cannot update User B's todo"""
-        async with AsyncClient(base_url=BASE_URL) as client:
+        async with AsyncClient(base_url=BASE_URL, timeout=30.0) as client:
             # User A creates a todo
             user_a_token = create_test_token("user_a")
             response_a = await client.post(
@@ -125,7 +125,7 @@ class TestUserIsolation:
     @pytest.mark.asyncio
     async def test_user_cannot_delete_other_user_todo(self):
         """Test that User A cannot delete User B's todo"""
-        async with AsyncClient(base_url=BASE_URL) as client:
+        async with AsyncClient(base_url=BASE_URL, timeout=30.0) as client:
             # User A creates a todo
             user_a_token = create_test_token("user_a")
             response_a = await client.post(
@@ -157,7 +157,7 @@ class TestUserIsolation:
     @pytest.mark.asyncio
     async def test_user_cannot_toggle_other_user_todo_completion(self):
         """Test that User A cannot toggle User B's todo completion status"""
-        async with AsyncClient(base_url=BASE_URL) as client:
+        async with AsyncClient(base_url=BASE_URL, timeout=30.0) as client:
             # User A creates a todo
             user_a_token = create_test_token("user_a")
             response_a = await client.post(
@@ -190,7 +190,7 @@ class TestUserIsolation:
     @pytest.mark.asyncio
     async def test_multiple_users_can_have_same_todo_titles(self):
         """Test that multiple users can create todos with the same title"""
-        async with AsyncClient(base_url=BASE_URL) as client:
+        async with AsyncClient(base_url=BASE_URL, timeout=30.0) as client:
             # User A creates a todo
             user_a_token = create_test_token("user_a")
             response_a = await client.post(

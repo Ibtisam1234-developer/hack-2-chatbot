@@ -48,6 +48,10 @@ from .models import (
     TodoResponse,
 )
 
+# Import chat models (Phase III)
+from ..models.conversation import Conversation
+from ..models.message import Message
+
 # Configure logging
 logger = logging.getLogger("database")
 
@@ -136,6 +140,9 @@ __all__ = [
     "TodoCreate",
     "TodoUpdate",
     "TodoResponse",
+    # Chat models (Phase III)
+    "Conversation",
+    "Message",
     # Initialization
     "init_database",
     "cleanup_database",

@@ -23,3 +23,7 @@ httpx==0.26.0
 # Code quality
 ruff==0.1.14
 black==24.1.1
+
+# AI and MCP (Phase III)
+openai>=1.0.0
+fastmcp>=0.1.0

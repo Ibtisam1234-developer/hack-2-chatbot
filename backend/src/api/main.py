@@ -27,7 +27,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from src.db import init_database, cleanup_database, check_database_health
-from src.api.routes import todos
+from src.api.routes import todos, chat
 
 # Configure logging
 logging.basicConfig(
@@ -113,6 +113,10 @@ app.add_middleware(
 
 # Include routers
 app.include_router(todos.router)
+app.include_router(chat.router)
+
+# Note: MCP tools are called directly from chat endpoint
+# FastMCP server mounting removed - tools work without external MCP server
 
 
 # Health check endpoint (no authentication required)

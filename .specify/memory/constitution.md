@@ -1,13 +1,17 @@
 <!--
 Sync Impact Report:
-- Version change: [NEW] → 1.0.0
-- Modified principles: N/A (initial constitution)
-- Added sections: 5 core principles, Architecture & Integration, Development Standards, Governance
+- Version change: 1.0.0 → 1.1.0
+- Modified principles: N/A
+- Added sections:
+  - Principle VI: Stateless Architecture
+  - Principle VII: Tool-Only AI Access (MCP)
+  - Principle VIII: AI Audit Trail
+  - Architecture section: AI Integration subsection
 - Removed sections: N/A
 - Templates requiring updates:
-  ✅ spec-template.md - reviewed, aligned with security and authentication requirements
+  ✅ spec-template.md - reviewed, compatible with AI chatbot requirements
   ✅ plan-template.md - reviewed, constitution check section compatible
-  ✅ tasks-template.md - reviewed, task structure supports async Python and security requirements
+  ✅ tasks-template.md - reviewed, task structure supports AI integration tasks
 - Follow-up TODOs: None
 -->
 
@@ -71,6 +75,45 @@ All database operations, external API calls, and I/O-bound operations MUST use a
 
 **Rationale**: Async operations maximize throughput under concurrent load, prevent thread blocking, and align with FastAPI's async-first architecture. Neon DB benefits from connection pooling in async contexts.
 
+### VI. Stateless Architecture
+
+The server MUST be horizontally scalable with no local session storage. All state MUST be persisted externally (database, cache) so that any server instance can handle any request. No in-memory session data, no local file caches, no instance-specific state.
+
+**Non-negotiable rules**:
+- No in-memory session storage (use database or Redis)
+- No local file system for user data or chat history
+- All server instances MUST be interchangeable
+- Load balancer can route any request to any instance
+- Server restarts MUST NOT lose user state
+
+**Rationale**: Horizontal scalability enables elastic scaling under load, zero-downtime deployments, and fault tolerance. Stateless servers simplify infrastructure and eliminate single points of failure.
+
+### VII. Tool-Only AI Access (MCP)
+
+The AI Agent MUST interact with tasks and user data ONLY via Model Context Protocol (MCP) tools. Direct database access from AI logic is FORBIDDEN. All AI capabilities are exposed through well-defined tool interfaces.
+
+**Non-negotiable rules**:
+- AI Agent uses MCP tools exclusively for data operations
+- No direct SQL queries from AI agent code
+- All tool calls are validated and authorized
+- Tools enforce user isolation (user_id from JWT)
+- Tool responses are structured and predictable
+
+**Rationale**: MCP tools create a security boundary between AI and data. Tools can enforce authorization, validate inputs, and audit actions. This prevents prompt injection from bypassing security controls.
+
+### VIII. AI Audit Trail
+
+Every AI action (tool call) and response MUST be logged in the `Message` table. The audit trail captures the full conversation context, tool invocations, and AI responses for debugging, compliance, and user transparency.
+
+**Non-negotiable rules**:
+- All user messages logged with timestamp and user_id
+- All AI responses logged with model identifier
+- All tool calls logged with parameters and results
+- Conversation threads linked via conversation_id
+- Logs retained per data retention policy
+
+**Rationale**: Audit trails enable debugging AI behavior, detecting misuse, satisfying compliance requirements, and providing users visibility into AI actions. Complete logging is essential for responsible AI deployment.
+
 ## Architecture & Integration
 
 ### Technology Stack
@@ -79,6 +122,8 @@ All database operations, external API calls, and I/O-bound operations MUST use a
 - **Backend**: FastAPI (Python 3.11+), async/await
 - **Database**: Neon DB (PostgreSQL-compatible), asyncpg driver
 - **Authentication**: Better Auth (shared secret)
+- **AI Logic**: OpenAI Agents SDK (Stateless Runner)
+- **AI Communication**: Model Context Protocol (MCP) for tool use
 - **Deployment**: TBD (requires clarification)
 
 ### Integration Points
@@ -86,6 +131,7 @@ All database operations, external API calls, and I/O-bound operations MUST use a
 - **Auth Flow**: Next.js Better Auth → JWT token → FastAPI verification → user_id extraction
 - **API Communication**: Next.js frontend → FastAPI backend (REST/JSON)
 - **Database Access**: FastAPI → Neon DB (async queries with user_id filtering)
+- **AI Integration**: Frontend → FastAPI → OpenAI Agents SDK → MCP Tools → Database
 
 ## Development Standards
 
@@ -102,6 +148,8 @@ All database operations, external API calls, and I/O-bound operations MUST use a
 - Security: Test user isolation (attempt cross-user data access)
 - Service Layer: Test CLI functionality through API endpoints
 - Async Operations: Test concurrent request handling
+- AI Tools: Test MCP tool authorization and user isolation
+- Audit Trail: Test message logging completeness and accuracy
 
 ### Security Checklist
 
@@ -111,6 +159,10 @@ All database operations, external API calls, and I/O-bound operations MUST use a
 - [ ] No hardcoded credentials or secrets
 - [ ] Input validation on all API endpoints
 - [ ] SQL injection prevention (parameterized queries)
+- [ ] AI tools enforce user_id isolation from JWT
+- [ ] All AI tool calls logged to Message table
+- [ ] No direct database access from AI agent code
+- [ ] Server stores no local session state
 
 ## Governance
 
@@ -137,4 +189,4 @@ This constitution supersedes all other development practices and conventions. Al
 - **MINOR**: New principles added or material expansions
 - **PATCH**: Clarifications, wording improvements, non-semantic fixes
 
-**Version**: 1.0.0 | **Ratified**: 2026-01-07 | **Last Amended**: 2026-01-07
+**Version**: 1.1.0 | **Ratified**: 2026-01-07 | **Last Amended**: 2026-01-11

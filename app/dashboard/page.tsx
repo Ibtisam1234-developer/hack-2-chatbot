@@ -112,7 +112,7 @@ export default function DashboardPage() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <p className="mt-4 text-gray-700">Loading...</p>
         </div>
       </div>
     );
@@ -139,17 +139,28 @@ export default function DashboardPage() {
                 <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
                   TodoZen
                 </h1>
-                <p className="text-xs text-gray-600">
+                <p className="text-xs text-gray-700">
                   {session.user?.email}
                 </p>
               </div>
             </div>
-            <button
-              onClick={handleSignOut}
-              className="px-4 py-2 text-sm font-medium text-purple-600 bg-white border-2 border-purple-200 rounded-lg hover:bg-purple-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all"
-            >
-              Sign Out
-            </button>
+            <div className="flex items-center space-x-3">
+              <a
+                href="/chat"
+                className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg hover:from-purple-600 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all flex items-center space-x-2"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+                <span>AI Chat</span>
+              </a>
+              <button
+                onClick={handleSignOut}
+                className="px-4 py-2 text-sm font-medium text-purple-600 bg-white border-2 border-purple-200 rounded-lg hover:bg-purple-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all"
+              >
+                Sign Out
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -161,7 +172,7 @@ export default function DashboardPage() {
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
             Welcome Back, {session.user?.name || "Friend"}
           </h2>
-          <p className="text-gray-600">
+          <p className="text-gray-700">
             Let's make today productive and peaceful
           </p>
         </div>
@@ -172,7 +183,7 @@ export default function DashboardPage() {
           <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-md border border-purple-100 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Tasks</p>
+                <p className="text-sm font-medium text-gray-700">Total Tasks</p>
                 <p className="text-3xl font-bold text-gray-900 mt-1">{totalTasks}</p>
               </div>
               <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-blue-100 rounded-lg flex items-center justify-center">
@@ -187,7 +198,7 @@ export default function DashboardPage() {
           <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-md border border-teal-100 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Completed</p>
+                <p className="text-sm font-medium text-gray-700">Completed</p>
                 <p className="text-3xl font-bold text-teal-600 mt-1">{completedTasks}</p>
               </div>
               <div className="w-12 h-12 bg-gradient-to-br from-teal-100 to-green-100 rounded-lg flex items-center justify-center">
@@ -202,7 +213,7 @@ export default function DashboardPage() {
           <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-md border border-orange-100 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Pending</p>
+                <p className="text-sm font-medium text-gray-700">Pending</p>
                 <p className="text-3xl font-bold text-orange-600 mt-1">{pendingTasks}</p>
               </div>
               <div className="w-12 h-12 bg-gradient-to-br from-orange-100 to-yellow-100 rounded-lg flex items-center justify-center">
@@ -217,7 +228,7 @@ export default function DashboardPage() {
           <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-md border border-purple-100 p-6">
             <div className="flex items-center justify-between mb-2">
               <div>
-                <p className="text-sm font-medium text-gray-600">Completion</p>
+                <p className="text-sm font-medium text-gray-700">Completion</p>
                 <p className="text-3xl font-bold text-purple-600 mt-1">{completionPercentage}%</p>
               </div>
               <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg flex items-center justify-center">
@@ -280,7 +291,7 @@ export default function DashboardPage() {
         {loading ? (
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-purple-100 p-8 text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading your todos...</p>
+            <p className="mt-4 text-gray-700">Loading your todos...</p>
           </div>
         ) : error ? (
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-red-200 p-8">

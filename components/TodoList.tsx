@@ -30,7 +30,7 @@ export function TodoList({ todos, onUpdate, onDelete, onEdit }: TodoListProps) {
           </svg>
         </div>
         <h3 className="text-lg font-semibold text-gray-900 mb-2">Your mind is clear</h3>
-        <p className="text-gray-600">
+        <p className="text-gray-700">
           No todos yet. Create your first task to get started on your journey to productivity.
         </p>
       </div>

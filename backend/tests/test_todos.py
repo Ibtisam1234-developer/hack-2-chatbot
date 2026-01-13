@@ -43,7 +43,7 @@ class TestHealthEndpoint:
     @pytest.mark.asyncio
     async def test_health_check(self):
         """Test that health endpoint returns 200"""
-        async with AsyncClient(base_url=BASE_URL) as client:
+        async with AsyncClient(base_url=BASE_URL, timeout=30.0) as client:
             response = await client.get("/health")
             assert response.status_code == 200
             data = response.json()
@@ -56,7 +56,7 @@ class TestCreateTodoEndpoint:
     @pytest.mark.asyncio
     async def test_create_todo_success(self):
         """Test creating a todo with valid data"""
-        async with AsyncClient(base_url=BASE_URL) as client:
+        async with AsyncClient(base_url=BASE_URL, timeout=30.0) as client:
             token = create_test_token("user_123")
             response = await client.post(
                 "/api/todos",
@@ -79,7 +79,7 @@ class TestCreateTodoEndpoint:
     @pytest.mark.asyncio
     async def test_create_todo_without_description(self):
         """Test creating a todo without description (optional field)"""
-        async with AsyncClient(base_url=BASE_URL) as client:
+        async with AsyncClient(base_url=BASE_URL, timeout=30.0) as client:
             token = create_test_token("user_123")
             response = await client.post(
                 "/api/todos",
@@ -95,7 +95,7 @@ class TestCreateTodoEndpoint:
     @pytest.mark.asyncio
     async def test_create_todo_empty_title(self):
         """Test that empty title returns 422 validation error"""
-        async with AsyncClient(base_url=BASE_URL) as client:
+        async with AsyncClient(base_url=BASE_URL, timeout=30.0) as client:
             token = create_test_token("user_123")
             response = await client.post(
                 "/api/todos",
@@ -108,7 +108,7 @@ class TestCreateTodoEndpoint:
     @pytest.mark.asyncio
     async def test_create_todo_missing_title(self):
         """Test that missing title returns 422 validation error"""
-        async with AsyncClient(base_url=BASE_URL) as client:
+        async with AsyncClient(base_url=BASE_URL, timeout=30.0) as client:
             token = create_test_token("user_123")
             response = await client.post(
                 "/api/todos",
@@ -121,7 +121,7 @@ class TestCreateTodoEndpoint:
     @pytest.mark.asyncio
     async def test_create_todo_title_too_long(self):
         """Test that title exceeding max length returns 422"""
-        async with AsyncClient(base_url=BASE_URL) as client:
+        async with AsyncClient(base_url=BASE_URL, timeout=30.0) as client:
             token = create_test_token("user_123")
             long_title = "x" * 201  # Exceeds 200 character limit
             response = await client.post(
@@ -135,7 +135,7 @@ class TestCreateTodoEndpoint:
     @pytest.mark.asyncio
     async def test_create_todo_without_auth(self):
         """Test that creating todo without auth returns 401"""
-        async with AsyncClient(base_url=BASE_URL) as client:
+        async with AsyncClient(base_url=BASE_URL, timeout=30.0) as client:
             response = await client.post(
                 "/api/todos",
                 json={"title": "Test", "description": "Test"}
@@ -150,7 +150,7 @@ class TestListTodosEndpoint:
     @pytest.mark.asyncio
     async def test_list_todos_empty(self):
         """Test listing todos when user has none"""
-        async with AsyncClient(base_url=BASE_URL) as client:
+        async with AsyncClient(base_url=BASE_URL, timeout=30.0) as client:
             token = create_test_token(f"user_{uuid4()}")
             response = await client.get(
                 "/api/todos",
@@ -165,7 +165,7 @@ class TestListTodosEndpoint:
     @pytest.mark.asyncio
     async def test_list_todos_with_items(self):
         """Test listing todos when user has multiple todos"""
-        async with AsyncClient(base_url=BASE_URL) as client:
+        async with AsyncClient(base_url=BASE_URL, timeout=30.0) as client:
             user_id = f"user_{uuid4()}"
             token = create_test_token(user_id)
 
@@ -190,7 +190,7 @@ class TestListTodosEndpoint:
     @pytest.mark.asyncio
     async def test_list_todos_without_auth(self):
         """Test that listing todos without auth returns 401"""
-        async with AsyncClient(base_url=BASE_URL) as client:
+        async with AsyncClient(base_url=BASE_URL, timeout=30.0) as client:
             response = await client.get("/api/todos")
             assert response.status_code == 401
 
@@ -201,7 +201,7 @@ class TestGetTodoEndpoint:
     @pytest.mark.asyncio
     async def test_get_todo_success(self):
         """Test getting a specific todo by ID"""
-        async with AsyncClient(base_url=BASE_URL) as client:
+        async with AsyncClient(base_url=BASE_URL, timeout=30.0) as client:
             token = create_test_token("user_123")
 
             # Create a todo
@@ -227,7 +227,7 @@ class TestGetTodoEndpoint:
     @pytest.mark.asyncio
     async def test_get_todo_not_found(self):
         """Test getting a non-existent todo returns 404"""
-        async with AsyncClient(base_url=BASE_URL) as client:
+        async with AsyncClient(base_url=BASE_URL, timeout=30.0) as client:
             token = create_test_token("user_123")
             fake_id = str(uuid4())
 
@@ -241,7 +241,7 @@ class TestGetTodoEndpoint:
     @pytest.mark.asyncio
     async def test_get_todo_invalid_uuid(self):
         """Test getting a todo with invalid UUID format"""
-        async with AsyncClient(base_url=BASE_URL) as client:
+        async with AsyncClient(base_url=BASE_URL, timeout=30.0) as client:
             token = create_test_token("user_123")
 
             response = await client.get(
@@ -254,7 +254,7 @@ class TestGetTodoEndpoint:
     @pytest.mark.asyncio
     async def test_get_todo_without_auth(self):
         """Test that getting todo without auth returns 401"""
-        async with AsyncClient(base_url=BASE_URL) as client:
+        async with AsyncClient(base_url=BASE_URL, timeout=30.0) as client:
             response = await client.get(f"/api/todos/{uuid4()}")
             assert response.status_code == 401
 
@@ -265,7 +265,7 @@ class TestUpdateTodoEndpoint:
     @pytest.mark.asyncio
     async def test_update_todo_success(self):
         """Test updating a todo with valid data"""
-        async with AsyncClient(base_url=BASE_URL) as client:
+        async with AsyncClient(base_url=BASE_URL, timeout=30.0) as client:
             token = create_test_token("user_123")
 
             # Create a todo
@@ -291,7 +291,7 @@ class TestUpdateTodoEndpoint:
     @pytest.mark.asyncio
     async def test_update_todo_partial(self):
         """Test partial update (only title or description)"""
-        async with AsyncClient(base_url=BASE_URL) as client:
+        async with AsyncClient(base_url=BASE_URL, timeout=30.0) as client:
             token = create_test_token("user_123")
 
             # Create a todo
@@ -316,7 +316,7 @@ class TestUpdateTodoEndpoint:
     @pytest.mark.asyncio
     async def test_update_todo_not_found(self):
         """Test updating non-existent todo returns 404"""
-        async with AsyncClient(base_url=BASE_URL) as client:
+        async with AsyncClient(base_url=BASE_URL, timeout=30.0) as client:
             token = create_test_token("user_123")
             fake_id = str(uuid4())
 
@@ -331,7 +331,7 @@ class TestUpdateTodoEndpoint:
     @pytest.mark.asyncio
     async def test_update_todo_without_auth(self):
         """Test that updating todo without auth returns 401"""
-        async with AsyncClient(base_url=BASE_URL) as client:
+        async with AsyncClient(base_url=BASE_URL, timeout=30.0) as client:
             response = await client.put(
                 f"/api/todos/{uuid4()}",
                 json={"title": "Updated"}
@@ -345,7 +345,7 @@ class TestDeleteTodoEndpoint:
     @pytest.mark.asyncio
     async def test_delete_todo_success(self):
         """Test deleting a todo"""
-        async with AsyncClient(base_url=BASE_URL) as client:
+        async with AsyncClient(base_url=BASE_URL, timeout=30.0) as client:
             token = create_test_token("user_123")
 
             # Create a todo
@@ -374,7 +374,7 @@ class TestDeleteTodoEndpoint:
     @pytest.mark.asyncio
     async def test_delete_todo_not_found(self):
         """Test deleting non-existent todo returns 404"""
-        async with AsyncClient(base_url=BASE_URL) as client:
+        async with AsyncClient(base_url=BASE_URL, timeout=30.0) as client:
             token = create_test_token("user_123")
             fake_id = str(uuid4())
 
@@ -388,7 +388,7 @@ class TestDeleteTodoEndpoint:
     @pytest.mark.asyncio
     async def test_delete_todo_without_auth(self):
         """Test that deleting todo without auth returns 401"""
-        async with AsyncClient(base_url=BASE_URL) as client:
+        async with AsyncClient(base_url=BASE_URL, timeout=30.0) as client:
             response = await client.delete(f"/api/todos/{uuid4()}")
             assert response.status_code == 401
 
@@ -399,7 +399,7 @@ class TestToggleCompletionEndpoint:
     @pytest.mark.asyncio
     async def test_toggle_completion_to_complete(self):
         """Test marking a todo as complete"""
-        async with AsyncClient(base_url=BASE_URL) as client:
+        async with AsyncClient(base_url=BASE_URL, timeout=30.0) as client:
             token = create_test_token("user_123")
 
             # Create a todo (default is incomplete)
@@ -424,7 +424,7 @@ class TestToggleCompletionEndpoint:
     @pytest.mark.asyncio
     async def test_toggle_completion_to_incomplete(self):
         """Test marking a completed todo as incomplete"""
-        async with AsyncClient(base_url=BASE_URL) as client:
+        async with AsyncClient(base_url=BASE_URL, timeout=30.0) as client:
             token = create_test_token("user_123")
 
             # Create and complete a todo
@@ -454,7 +454,7 @@ class TestToggleCompletionEndpoint:
     @pytest.mark.asyncio
     async def test_toggle_completion_not_found(self):
         """Test toggling completion of non-existent todo returns 404"""
-        async with AsyncClient(base_url=BASE_URL) as client:
+        async with AsyncClient(base_url=BASE_URL, timeout=30.0) as client:
             token = create_test_token("user_123")
             fake_id = str(uuid4())
 
@@ -468,7 +468,7 @@ class TestToggleCompletionEndpoint:
     @pytest.mark.asyncio
     async def test_toggle_completion_without_auth(self):
         """Test that toggling completion without auth returns 401"""
-        async with AsyncClient(base_url=BASE_URL) as client:
+        async with AsyncClient(base_url=BASE_URL, timeout=30.0) as client:
             response = await client.patch(f"/api/todos/{uuid4()}/complete")
             assert response.status_code == 401
 
@@ -479,7 +479,7 @@ class TestInputValidation:
     @pytest.mark.asyncio
     async def test_create_todo_with_extra_fields(self):
         """Test that extra fields are ignored"""
-        async with AsyncClient(base_url=BASE_URL) as client:
+        async with AsyncClient(base_url=BASE_URL, timeout=30.0) as client:
             token = create_test_token("user_123")
             response = await client.post(
                 "/api/todos",
@@ -500,7 +500,7 @@ class TestInputValidation:
     @pytest.mark.asyncio
     async def test_update_todo_with_invalid_data_type(self):
         """Test that invalid data types return 422"""
-        async with AsyncClient(base_url=BASE_URL) as client:
+        async with AsyncClient(base_url=BASE_URL, timeout=30.0) as client:
             token = create_test_token("user_123")
 
             # Create a todo

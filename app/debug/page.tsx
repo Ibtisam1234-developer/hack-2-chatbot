@@ -10,8 +10,8 @@ export default function DebugPage() {
     if (session) {
       console.log("=== FULL SESSION DATA ===");
       console.log(JSON.stringify(session, null, 2));
-      console.log("=== SESSION.DATA ===");
-      console.log(JSON.stringify(session.data, null, 2));
+      console.log("=== USER DATA ===");
+      console.log(JSON.stringify(session.user, null, 2));
     }
   }, [session]);
 

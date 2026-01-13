@@ -24,7 +24,7 @@ All protected routes MUST use Depends(get_current_user_id) to enforce authentica
 
 import os
 import logging
-from typing import Annotated
+from typing import Annotated, Optional
 from fastapi import HTTPException, Security, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import jwt, JWTError
@@ -40,7 +40,8 @@ load_dotenv()
 # HTTPBearer security scheme for JWT tokens
 security = HTTPBearer(
     scheme_name="Bearer",
-    description="JWT token from Better Auth. Include in Authorization header as 'Bearer <token>'"
+    description="JWT token from Better Auth. Include in Authorization header as 'Bearer <token>'",
+    auto_error=False
 )
 
 
@@ -123,22 +124,12 @@ def verify_token(credentials: HTTPAuthorizationCredentials) -> dict:
 
 
 async def get_current_user_id(
-    credentials: Annotated[HTTPAuthorizationCredentials, Security(security)]
+    credentials: Annotated[Optional[HTTPAuthorizationCredentials], Security(security)] = None
 ) -> str:
     """
     FastAPI dependency to extract user_id from JWT token.
 
     This is the primary authentication dependency for all protected routes.
-
-    Usage in routes:
-        @router.get("/api/todos")
-        async def list_todos(
-            user_id: Annotated[str, Depends(get_current_user_id)],
-            session: AsyncSession = Depends(get_session)
-        ):
-            # user_id is automatically extracted from JWT
-            # All queries MUST filter by this user_id
-            pass
 
     Args:
         credentials: Automatically extracted from Authorization header
@@ -147,8 +138,15 @@ async def get_current_user_id(
         str: User ID from JWT "sub" claim
 
     Raises:
-        HTTPException(401): If token is invalid or missing user_id
+        HTTPException(401): If token is missing, invalid, or missing user_id
     """
+    if not credentials:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+
     # Verify token and extract payload
     payload = verify_token(credentials)
 

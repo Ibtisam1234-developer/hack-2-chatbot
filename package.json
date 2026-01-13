@@ -9,7 +9,9 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@ai-sdk/react": "^3.0.29",
     "@types/jsonwebtoken": "^9.0.10",
+    "ai": "^6.0.27",
     "better-auth": "^1.4.10",
     "jsonwebtoken": "^9.0.3",
     "next": "16.1.1",
@@ -20,6 +22,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/pg": "^8.16.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",

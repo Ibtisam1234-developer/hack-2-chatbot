@@ -66,7 +66,7 @@ export default function LoginPage() {
           <h2 className="text-3xl font-bold text-gray-900 mb-2">
             Welcome Back
           </h2>
-          <p className="text-gray-600">
+          <p className="text-gray-700">
             Sign in to continue your journey to productivity
           </p>
         </div>
@@ -147,7 +147,7 @@ export default function LoginPage() {
                 <div className="w-full border-t border-purple-200"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">New to TodoZen?</span>
+                <span className="px-2 bg-white text-gray-600">New to TodoZen?</span>
               </div>
             </div>
           </div>

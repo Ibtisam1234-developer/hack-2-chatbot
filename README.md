@@ -1,6 +1,6 @@
 # Todo API with Authentication
 
-A full-stack todo application with JWT authentication, built with Next.js 16, FastAPI, and Neon PostgreSQL.
+A full-stack todo application with JWT authentication and AI-powered task management, built with Next.js 16, FastAPI, and Neon PostgreSQL.
 
 ## Features
 
@@ -10,6 +10,9 @@ A full-stack todo application with JWT authentication, built with Next.js 16, Fa
 - ✅ **Category Filtering** - Organize todos by Work, Personal, Health, Finance, or Other
 - ✅ **Due Date & Time** - Set precise deadlines with datetime picker
 - ✅ **Completion Tracking** - Mark todos as complete/incomplete with optimistic updates
+- ✅ **AI Chat Assistant** - Manage tasks via natural language conversation
+- ✅ **Conversation History** - Continue previous chats with maintained context
+- ✅ **Tool Call Auditing** - See what actions the AI performed
 - ✅ **Beautiful UI** - Modern landing page with gradient effects and smooth animations
 - ✅ **Delete Confirmation** - Custom modal instead of browser alerts
 - ✅ **Responsive Design** - Mobile-first design with Tailwind CSS
@@ -32,6 +35,8 @@ A full-stack todo application with JWT authentication, built with Next.js 16, Fa
 - Neon PostgreSQL
 - python-jose (JWT verification)
 - asyncpg (database driver)
+- OpenRouter API (free LLMs - Gemma, Llama, Qwen)
+- FastMCP (MCP tool server)
 
 ## Quick Start (5 minutes)
 
@@ -76,9 +81,13 @@ BETTER_AUTH_SECRET=<same-secret-as-above>
 DATABASE_URL=postgresql://user:password@ep-xxx.us-east-2.aws.neon.tech/neondb
 API_PORT=8000
 CORS_ORIGINS=http://localhost:3000
+OPENROUTER_API_KEY=sk-or-v1-your-openrouter-api-key
+OPENROUTER_MODEL=openrouter/google/gemma-2-9b-it:free
 ```
 
 **CRITICAL:** The `BETTER_AUTH_SECRET` must be identical in both files.
+
+**Get OpenRouter API Key:** Sign up at https://openrouter.ai/keys (free, no credit card required)
 
 ### 3. Start the Backend
 
@@ -154,6 +163,7 @@ todoweb/
 
 All endpoints require JWT authentication via `Authorization: Bearer <token>` header.
 
+### Todo Endpoints
 - `POST /api/todos` - Create a new todo
 - `GET /api/todos` - List all todos (user-isolated)
 - `GET /api/todos/{id}` - Get a specific todo
@@ -161,7 +171,40 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 - `DELETE /api/todos/{id}` - Delete a todo
 - `PATCH /api/todos/{id}/complete` - Toggle completion status
 
-See `backend/src/api/routes/todos.py` for implementation details.
+### Chat Endpoints
+- `POST /api/{user_id}/chat` - Send a message to the AI assistant
+- `GET /api/{user_id}/conversations` - List all conversations
+- `GET /api/{user_id}/conversations/{id}` - Get conversation with messages
+
+See `backend/src/api/routes/` for implementation details.
+
+## AI Chat Assistant
+
+The AI chat assistant allows users to manage tasks through natural language conversation.
+
+### Capabilities
+- **Add tasks**: "Add a task to buy groceries"
+- **List tasks**: "Show my pending tasks" or "What tasks do I have?"
+- **Complete tasks**: "Mark the groceries task as done"
+
+### Architecture
+- **Stateless**: All conversation history stored in database, fetched per request
+- **MCP Tools**: AI accesses data only through Model Context Protocol tools
+- **Audit Trail**: All tool calls logged for transparency
+
+### Example Conversation
+```
+User: Add a task to call the dentist
+AI: I've added 'Call the dentist' to your task list.
+
+User: What tasks do I have?
+AI: Your pending tasks:
+- [abc123] ○ Call the dentist
+- [def456] ○ Buy groceries
+
+User: Mark the dentist task as done
+AI: Task 'Call the dentist' marked as complete.
+```
 
 ## Testing
 
