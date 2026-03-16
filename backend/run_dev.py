@@ -36,7 +36,6 @@ if missing_vars:
     sys.exit(1)
 
 # Get configuration from environment
-API_PORT = int(os.getenv("API_PORT", "8000"))
 API_HOST = os.getenv("API_HOST", "0.0.0.0")
 LOG_LEVEL = os.getenv("LOG_LEVEL", "info").lower()
 
@@ -44,12 +43,11 @@ print("=" * 60)
 print("Starting Todo API Development Server")
 print("=" * 60)
 print(f"Host: {API_HOST}")
-print(f"Port: {API_PORT}")
 print(f"Log Level: {LOG_LEVEL}")
 print(f"Reload: Enabled (development mode)")
 print("=" * 60)
-print(f"\nAPI Documentation: http://localhost:{API_PORT}/docs")
-print(f"Health Check: http://localhost:{API_PORT}/health")
+print(f"\nAPI Documentation: http://localhost:8000/docs")
+print(f"Health Check: http://localhost:8000/health")
 print("\nPress CTRL+C to stop the server")
 print("=" * 60)
 
@@ -60,7 +58,6 @@ if __name__ == "__main__":
     uvicorn.run(
         "src.api.main:app",
         host=API_HOST,
-        port=API_PORT,
         reload=True,
         log_level=LOG_LEVEL,
         access_log=True

@@ -89,15 +89,12 @@ app = FastAPI(
 )
 
 
-# Configure CORS for Next.js frontend
-# CRITICAL: Must allow credentials for JWT token transmission
+# Configure CORS - Allow all origins
+# NOTE: allow_credentials=False when using wildcard origin
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",  # Next.js development server
-        "http://127.0.0.1:3000",  # Alternative localhost
-    ],
-    allow_credentials=True,  # Required for JWT cookies/headers
+    allow_origins=["*"],  # Allow all origins
+    allow_credentials=False,  # Required to be False when using "*"
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=[
         "Authorization",  # JWT Bearer token
